@@ -115,6 +115,7 @@ const sidebars = {
         "providers/mistral", 
         "providers/codestral",
         "providers/cohere", 
+        "providers/notdiamond",
         "providers/anyscale",
         "providers/huggingface", 
         "providers/databricks",

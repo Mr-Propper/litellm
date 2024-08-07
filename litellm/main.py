@@ -86,6 +86,7 @@ from .llms import (
     gemini,
     huggingface_restapi,
     maritalk,
+    notdiamond,
     nlp_cloud,
     ollama,
     ollama_chat,
@@ -386,6 +387,7 @@ async def acompletion(
             or custom_llm_provider == "triton"
             or custom_llm_provider == "clarifai"
             or custom_llm_provider == "watsonx"
+            or custom_llm_provider == "notdiamond"
             or custom_llm_provider in litellm.openai_compatible_providers
             or custom_llm_provider in litellm._custom_providers
         ):  # currently implemented aiohttp calls for just azure, openai, hf, ollama, vertex ai soon all.
@@ -1513,6 +1515,49 @@ def completion(
                     original_response=response,
                 )
             response = response
+
+        elif custom_llm_provider == "notdiamond":
+            notdiamond_key = (
+                api_key
+                or litellm.notdiamond_key
+                or get_secret("NOTDIAMOND_API_KEY")
+                or litellm.api_key
+            )
+
+            api_base = (
+                api_base
+                or litellm.api_base
+                or get_secret("NOTDIAMOND_API_BASE")
+                # TODO: confirm?
+                or "https://not-diamond-server.onrender.com/v2/optimizer/modelSelect"
+            )
+
+            # since notdiamond.completion() internally calls other models' completion functions
+            # streaming does not need to be handled separately
+            response = notdiamond.completion(
+                model=model,
+                messages=messages,
+                api_base=api_base,
+                model_response=model_response,
+                print_verbose=print_verbose,
+                optional_params=optional_params,
+                litellm_params=litellm_params,
+                logger_fn=logger_fn,
+                encoding=encoding,
+                api_key=notdiamond_key,
+                logging_obj=logging,
+            )
+
+            if optional_params.get("stream", False) or acompletion == True:
+                ## LOGGING
+                logging.post_call(
+                    input=messages,
+                    api_key=api_key,
+                    original_response=response,
+                )
+
+            response = response
+
         elif custom_llm_provider == "nlp_cloud":
             nlp_cloud_key = (
                 api_key
