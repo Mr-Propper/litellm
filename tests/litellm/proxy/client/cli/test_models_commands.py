@@ -2,7 +2,7 @@
 import json
 import os
 import time
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 # third party imports
 from click.testing import CliRunner
@@ -224,6 +224,68 @@ def test_models_info_table_format(mock_models_info, cli_runner):
     mock_models_info.return_value.models.info.assert_called_once()
 
 
+def make_models():
+    return [
+        {"id": "b-model", "object": "model", "created": 200, "owned_by": "org1"},
+        {"id": "a-model", "object": "model", "created": 100, "owned_by": "org2"},
+        {"id": "c-model", "object": "model", "created": 300, "owned_by": "org3"},
+    ]
+
+
+def _mock_send_with_models(models):
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = {"data": models}
+    return lambda *args, **kwargs: mock_response
+
+
+@pytest.fixture
+def mock_models_http_response():
+    with patch("requests.Session.send", new=_mock_send_with_models(make_models())):
+        yield
+
+
+def test_models_list_sort_by_model_name_asc(cli_runner, mock_models_http_response):
+    result = cli_runner.invoke(cli, [
+        "models", "list",
+        "--sort-by=model_name", "--sort-order=asc",
+    ])
+    assert result.exit_code == 0
+    # Should be a-model, b-model, c-model in order
+    idx_a = result.output.find("a-model")
+    idx_b = result.output.find("b-model")
+    idx_c = result.output.find("c-model")
+    assert 0 <= idx_a < idx_b < idx_c
+
+
+def test_models_list_sort_by_model_name_desc(cli_runner, mock_models_http_response):
+    result = cli_runner.invoke(cli, ["models", "list", "--sort-by", "model_name", "--sort-order", "desc"])
+    assert result.exit_code == 0
+    # Should be c-model, b-model, a-model in order
+    idx_c = result.output.find("c-model")
+    idx_b = result.output.find("b-model")
+    idx_a = result.output.find("a-model")
+    assert 0 <= idx_c < idx_b < idx_a
+
+
+def test_models_list_sort_by_created_asc(cli_runner, mock_models_http_response):
+    result = cli_runner.invoke(cli, ["models", "list", "--sort-by", "created", "--sort-order", "asc"])
+    assert result.exit_code == 0
+    # Should be a-model (100), b-model (200), c-model (300)
+    idx_a = result.output.find("a-model")
+    idx_b = result.output.find("b-model")
+    idx_c = result.output.find("c-model")
+    assert 0 <= idx_a < idx_b < idx_c
+
+
+def test_models_list_sort_by_created_desc(cli_runner, mock_models_http_response):
+    result = cli_runner.invoke(cli, ["models", "list", "--sort-by", "created", "--sort-order", "desc"])
+    assert result.exit_code == 0
+    # Should be c-model (300), b-model (200), a-model (100)
+    idx_c = result.output.find("c-model")
+    idx_b = result.output.find("b-model")
+    idx_a = result.output.find("a-model")
+    assert 0 <= idx_c < idx_b < idx_a
 def test_models_import_only_models_matching_regex(tmp_path, mock_client, cli_runner):
     """Test the --only-models-matching-regex option for models import command"""
     # Prepare a YAML file with a mix of models
