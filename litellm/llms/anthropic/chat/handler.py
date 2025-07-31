@@ -243,6 +243,32 @@ class AnthropicChatCompletion(BaseLLM):
         headers={},
         client: Optional[AsyncHTTPHandler] = None,
     ) -> Union[ModelResponse, "CustomStreamWrapper"]:
+        # Handle raw httpx.AsyncClient by normalizing to Anthropic SDK
+        if client is not None and isinstance(client, httpx.AsyncClient):
+            from litellm.litellm_core_utils.core_helpers import normalize_httpx_client_for_anthropic
+            
+            normalized_client = normalize_httpx_client_for_anthropic(
+                client=client,
+                is_async=True,
+                api_key=api_key,
+                api_base=api_base,
+            )
+            
+            if normalized_client is not None:
+                # Extract max_tokens from data or optional_params
+                max_tokens = data.get("max_tokens") or optional_params.get("max_tokens", 4096)
+                
+                # Use the normalized Anthropic SDK client directly
+                response = await normalized_client.messages.create(
+                    model=model,
+                    messages=messages,
+                    headers=headers,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    **{k: v for k, v in optional_params.items() if k != "max_tokens"},
+                )
+                return response
+        
         async_handler = client or get_async_httpx_client(
             llm_provider=litellm.LlmProviders.ANTHROPIC
         )
@@ -433,12 +459,37 @@ class AnthropicChatCompletion(BaseLLM):
                 )
 
             else:
-                if client is None or not isinstance(client, HTTPHandler):
+                # Handle raw httpx clients by normalizing to Anthropic SDK
+                if client is not None and isinstance(client, httpx.Client):
+                    from litellm.litellm_core_utils.core_helpers import normalize_httpx_client_for_anthropic
+                    
+                    normalized_client = normalize_httpx_client_for_anthropic(
+                        client=client,
+                        is_async=False,
+                        api_key=api_key,
+                        api_base=api_base,
+                    )
+                    
+                    if normalized_client is not None:
+                        # Extract max_tokens from data or optional_params
+                        max_tokens = data.get("max_tokens") or optional_params.get("max_tokens", 4096)
+                        
+                        # Use the normalized Anthropic SDK client directly
+                        response = normalized_client.messages.create(
+                            model=model,
+                            messages=messages,
+                            headers=headers,
+                            max_tokens=max_tokens,
+                            timeout=timeout,
+                            **{k: v for k, v in optional_params.items() if k != "max_tokens"},
+                        )
+                        return response
+                
+                elif client is None:
                     client = _get_httpx_client(
                         params={"timeout": timeout}
                     )
-                else:
-                    client = client
+                # If client is already a proper handler, use as-is
 
                 try:
                     response = client.post(
