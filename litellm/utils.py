@@ -5479,6 +5479,11 @@ def validate_environment(  # noqa: PLR0915
                 keys_in_environment = True
             else:
                 missing_keys.append("DASHSCOPE_API_KEY")
+        elif custom_llm_provider == "modelscope":
+            if "MODELSCOPE_API_KEY" in os.environ:
+                keys_in_environment = True
+            else:
+                missing_keys.append("MODELSCOPE_API_KEY")
         elif custom_llm_provider == "moonshot":
             if "MOONSHOT_API_KEY" in os.environ:
                 keys_in_environment = True
@@ -6978,6 +6983,8 @@ class ProviderConfigManager:
             return litellm.NebiusConfig()
         elif litellm.LlmProviders.DASHSCOPE == provider:
             return litellm.DashScopeChatConfig()
+        elif litellm.LlmProviders.MODELSCOPE == provider:
+            return litellm.ModelScopeChatConfig()
         elif litellm.LlmProviders.MOONSHOT == provider:
             return litellm.MoonshotChatConfig()
         elif litellm.LlmProviders.V0 == provider:
