@@ -29,7 +29,11 @@ from litellm.types.llms.openai import (
     PathLike,
 )
 from litellm.types.llms.vertex_ai import GcsBucketResponse
-from litellm.types.utils import ExtractedFileData, LlmProviders
+from litellm.types.utils import (
+    ExtractedFileData,
+    LlmProviders,
+    StandardCallbackDynamicParams,
+)
 
 from ..common_utils import VertexAIError
 from ..vertex_llm_base import VertexBase
@@ -150,6 +154,28 @@ class VertexAIFilesConfig(VertexBase, BaseFilesConfig):
             return filename
         ## 3. If no file name, return timestamp
         return str(int(time.time()))
+    
+    @staticmethod
+    def _get_bucket_name(
+        standard_callback_dynamic_params: StandardCallbackDynamicParams,
+        litellm_params: Dict,
+    ) -> str:
+        """
+        Get the GCS bucket name from the litellm_params
+        """
+        gcs_bucket_name = (
+            standard_callback_dynamic_params.get("gcs_bucket_name") or 
+            #########################################################
+            # backward compatibility
+            #########################################################
+            os.getenv("GCS_BUCKET_NAME") or 
+            litellm_params.get("bucket_name")
+        )
+
+
+        if not gcs_bucket_name:
+            raise ValueError("GCS bucket_name is required for vertex_ai create_file. Please pass `gcs_bucket_name` in your request body.")
+        return gcs_bucket_name
 
     def get_complete_file_url(
         self,
@@ -159,13 +185,15 @@ class VertexAIFilesConfig(VertexBase, BaseFilesConfig):
         optional_params: Dict,
         litellm_params: Dict,
         data: CreateFileRequest,
+        standard_callback_dynamic_params: StandardCallbackDynamicParams,
     ) -> str:
         """
         Get the complete url for the request
         """
-        bucket_name = litellm_params.get("bucket_name") or os.getenv("GCS_BUCKET_NAME")
-        if not bucket_name:
-            raise ValueError("GCS bucket_name is required")
+        bucket_name = self._get_bucket_name(
+            standard_callback_dynamic_params=standard_callback_dynamic_params,
+            litellm_params=litellm_params,
+        )
         file_data = data.get("file")
         purpose = data.get("purpose")
         if file_data is None:
