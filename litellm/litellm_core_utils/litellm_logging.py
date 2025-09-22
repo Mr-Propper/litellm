@@ -58,6 +58,7 @@ from litellm.integrations.custom_guardrail import CustomGuardrail
 from litellm.integrations.custom_logger import CustomLogger
 from litellm.integrations.deepeval.deepeval import DeepEvalLogger
 from litellm.integrations.mlflow import MlflowLogger
+from litellm.integrations.neatlogs import NeatlogsLogger
 from litellm.integrations.sqs import SQSLogger
 from litellm.litellm_core_utils.get_litellm_params import get_litellm_params
 from litellm.litellm_core_utils.llm_cost_calc.tool_call_cost_tracking import (
@@ -3502,6 +3503,14 @@ def _init_custom_logger_compatible_class(  # noqa: PLR0915
             _mlflow_logger = MlflowLogger()
             _in_memory_loggers.append(_mlflow_logger)
             return _mlflow_logger  # type: ignore
+        elif logging_integration == "neatlogs":
+            for callback in _in_memory_loggers:
+                if isinstance(callback, NeatlogsLogger):
+                    return callback  # type: ignore
+
+            _neatlogs_logger = NeatlogsLogger()
+            _in_memory_loggers.append(_neatlogs_logger)
+            return _neatlogs_logger  # type: ignore
         elif logging_integration == "langfuse":
             for callback in _in_memory_loggers:
                 if isinstance(callback, LangfusePromptManagement):
@@ -3756,6 +3765,10 @@ def get_custom_logger_compatible_class(  # noqa: PLR0915
         elif logging_integration == "mlflow":
             for callback in _in_memory_loggers:
                 if isinstance(callback, MlflowLogger):
+                    return callback
+        elif logging_integration == "neatlogs":
+            for callback in _in_memory_loggers:
+                if isinstance(callback, NeatlogsLogger):
                     return callback
         elif logging_integration == "pagerduty":
             for callback in _in_memory_loggers:
@@ -4190,16 +4203,22 @@ class StandardLoggingPayloadSetup:
 
             # Get the actual s3_path from the configured cold storage logger instance
             s3_path = ""  # default value
-            
+
             # Try to get the actual logger instance from the logger name
             try:
-                custom_logger = litellm.logging_callback_manager.get_active_custom_logger_for_callback_name(configured_cold_storage_logger)
-                if custom_logger and hasattr(custom_logger, 's3_path') and custom_logger.s3_path:
+                custom_logger = litellm.logging_callback_manager.get_active_custom_logger_for_callback_name(
+                    configured_cold_storage_logger
+                )
+                if (
+                    custom_logger
+                    and hasattr(custom_logger, "s3_path")
+                    and custom_logger.s3_path
+                ):
                     s3_path = custom_logger.s3_path
             except Exception:
                 # If any error occurs in getting the logger instance, use default empty s3_path
                 pass
-            
+
             s3_object_key = get_s3_object_key(
                 s3_path=s3_path,  # Use actual s3_path from logger configuration
                 team_alias_prefix="",  # Don't split by team alias for cold storage

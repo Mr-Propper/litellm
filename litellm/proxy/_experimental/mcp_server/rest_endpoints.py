@@ -23,6 +23,7 @@ router = APIRouter(
 if MCP_AVAILABLE:
     from litellm.experimental_mcp_client.client import MCPTool
     from litellm.proxy._experimental.mcp_server.mcp_server_manager import (
+        _convert_protocol_version_to_enum,
         global_mcp_server_manager,
     )
     from litellm.proxy._experimental.mcp_server.server import (
@@ -68,11 +69,14 @@ if MCP_AVAILABLE:
             for tool in tools
         ]
 
-    async def _get_tools_for_single_server(server, server_auth_header):
+    async def _get_tools_for_single_server(
+        server, server_auth_header, mcp_protocol_version
+    ):
         """Helper function to get tools for a single server."""
         tools = await global_mcp_server_manager._get_tools_from_server(
             server=server,
             mcp_auth_header=server_auth_header,
+            mcp_protocol_version=mcp_protocol_version,
         )
         return _create_tool_response_objects(tools, server.mcp_info)
 
@@ -118,6 +122,9 @@ if MCP_AVAILABLE:
             mcp_server_auth_headers = (
                 MCPRequestHandler._get_mcp_server_auth_headers_from_headers(headers)
             )
+            mcp_protocol_version = headers.get(
+                MCPRequestHandler.MCP_PROTOCOL_VERSION_HEADER_NAME
+            )
 
             list_tools_result = []
             error_message = None
@@ -138,7 +145,7 @@ if MCP_AVAILABLE:
 
                 try:
                     list_tools_result = await _get_tools_for_single_server(
-                        server, server_auth_header
+                        server, server_auth_header, mcp_protocol_version
                     )
                 except Exception as e:
                     verbose_logger.exception(
@@ -159,7 +166,7 @@ if MCP_AVAILABLE:
 
                     try:
                         tools_result = await _get_tools_for_single_server(
-                            server, server_auth_header
+                            server, server_auth_header, mcp_protocol_version
                         )
                         list_tools_result.extend(tools_result)
                     except Exception as e:
@@ -279,6 +286,9 @@ if MCP_AVAILABLE:
                     name=request.alias or request.server_name or "",
                     url=request.url,
                     transport=request.transport,
+                    spec_version=_convert_protocol_version_to_enum(
+                        request.spec_version
+                    ),
                     auth_type=request.auth_type,
                     mcp_info=request.mcp_info,
                 ),

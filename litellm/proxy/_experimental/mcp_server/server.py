@@ -178,6 +178,7 @@ if MCP_AVAILABLE:
                 mcp_auth_header,
                 mcp_servers,
                 mcp_server_auth_headers,
+                mcp_protocol_version,
             ) = get_auth_context()
             verbose_logger.debug(
                 f"MCP list_tools - User API Key Auth from context: {user_api_key_auth}"
@@ -195,6 +196,7 @@ if MCP_AVAILABLE:
                 mcp_auth_header=mcp_auth_header,
                 mcp_servers=mcp_servers,
                 mcp_server_auth_headers=mcp_server_auth_headers,
+                mcp_protocol_version=mcp_protocol_version,
             )
             verbose_logger.info(
                 f"MCP list_tools - Successfully returned {len(tools)} tools"
@@ -235,6 +237,7 @@ if MCP_AVAILABLE:
             mcp_auth_header,
             _,
             mcp_server_auth_headers,
+            mcp_protocol_version,
         ) = get_auth_context()
 
         verbose_logger.debug(
@@ -266,6 +269,7 @@ if MCP_AVAILABLE:
                 user_api_key_auth=user_api_key_auth,
                 mcp_auth_header=mcp_auth_header,
                 mcp_server_auth_headers=mcp_server_auth_headers,
+                mcp_protocol_version=mcp_protocol_version,
                 **data,  # for logging
             )
         except BlockedPiiEntityError as e:
@@ -357,6 +361,7 @@ if MCP_AVAILABLE:
         mcp_auth_header: Optional[str],
         mcp_servers: Optional[List[str]],
         mcp_server_auth_headers: Optional[Dict[str, str]] = None,
+        mcp_protocol_version: Optional[str] = None,
     ) -> List[MCPTool]:
         """
         Helper method to fetch tools from MCP servers based on server filtering criteria.
@@ -406,6 +411,7 @@ if MCP_AVAILABLE:
                 tools = await global_mcp_server_manager._get_tools_from_server(
                     server=server,
                     mcp_auth_header=server_auth_header,
+                    mcp_protocol_version=mcp_protocol_version,
                 )
                 all_tools.extend(tools)
                 verbose_logger.debug(
@@ -427,6 +433,7 @@ if MCP_AVAILABLE:
         mcp_auth_header: Optional[str] = None,
         mcp_servers: Optional[List[str]] = None,
         mcp_server_auth_headers: Optional[Dict[str, str]] = None,
+        mcp_protocol_version: Optional[str] = None,
     ) -> List[MCPTool]:
         """
         List all available MCP tools.
@@ -450,6 +457,7 @@ if MCP_AVAILABLE:
                 mcp_auth_header=mcp_auth_header,
                 mcp_servers=mcp_servers,
                 mcp_server_auth_headers=mcp_server_auth_headers,
+                mcp_protocol_version=mcp_protocol_version,
             )
             verbose_logger.debug(
                 f"Successfully fetched {len(managed_tools)} tools from managed MCP servers"
@@ -492,6 +500,7 @@ if MCP_AVAILABLE:
         user_api_key_auth: Optional[UserAPIKeyAuth] = None,
         mcp_auth_header: Optional[str] = None,
         mcp_server_auth_headers: Optional[Dict[str, str]] = None,
+        mcp_protocol_version: Optional[str] = None,
         **kwargs: Any,
     ) -> List[Union[TextContent, ImageContent, EmbeddedResource]]:
         """
@@ -539,6 +548,7 @@ if MCP_AVAILABLE:
                 user_api_key_auth=user_api_key_auth,
                 mcp_auth_header=mcp_auth_header,
                 mcp_server_auth_headers=mcp_server_auth_headers,
+                mcp_protocol_version=mcp_protocol_version,
                 litellm_logging_obj=litellm_logging_obj,
             )
 
@@ -591,6 +601,7 @@ if MCP_AVAILABLE:
         user_api_key_auth: Optional[UserAPIKeyAuth] = None,
         mcp_auth_header: Optional[str] = None,
         mcp_server_auth_headers: Optional[Dict[str, str]] = None,
+        mcp_protocol_version: Optional[str] = None,
         litellm_logging_obj: Optional[Any] = None,
     ) -> List[Union[TextContent, ImageContent, EmbeddedResource]]:
         """Handle tool execution for managed server tools"""
@@ -632,37 +643,45 @@ if MCP_AVAILABLE:
         import re
 
         mcp_servers_from_path: Optional[List[str]] = None
-        # Match /mcp/<servers_and_maybe_path>
-        # Where servers can be comma-separated list of server names
+        # Match /mcp/<servers>/<optional_path>
+        # Where <servers> can be comma-separated list of server names
         # Server names can contain slashes (e.g., "custom_solutions/user_123")
-        mcp_path_match = re.match(r"^/mcp/([^?#]+)(?:\?.*)?(?:#.*)?$", path)
+        mcp_path_match = re.match(r"^/mcp/([^?#]+?)(/[^?#]*)?(?:\?.*)?(?:#.*)?$", path)
         if mcp_path_match:
-            servers_and_path = mcp_path_match.group(1)
-            
-            if servers_and_path:
-                # Check if it contains commas (comma-separated servers)
-                if ',' in servers_and_path:
-                    # For comma-separated, look for a path at the end
-                    # Common patterns: /tools, /chat/completions, etc.
-                    path_match = re.search(r'/([^/,]+(?:/[^/,]+)*)$', servers_and_path)
-                    if path_match:
-                        # Path found at the end, remove it from servers
-                        path_part = '/' + path_match.group(1)
-                        servers_part = servers_and_path[:-len(path_part)]
-                        mcp_servers_from_path = [s.strip() for s in servers_part.split(',') if s.strip()]
-                    else:
-                        # No path, just comma-separated servers
-                        mcp_servers_from_path = [s.strip() for s in servers_and_path.split(',') if s.strip()]
+            mcp_servers_str = mcp_path_match.group(1)
+            optional_path = mcp_path_match.group(2)
+
+            if mcp_servers_str:
+                # First, try to split by comma for comma-separated lists
+                if "," in mcp_servers_str:
+                    # For comma-separated lists, we need to handle the case where the last item
+                    # might include the path (e.g., "zapier,group1/tools" -> ["zapier", "group1/tools"])
+                    parts = [s.strip() for s in mcp_servers_str.split(",") if s.strip()]
+
+                    # If there's an optional path AND the last part contains a slash that matches the optional path,
+                    # remove the path portion from the last server name
+                    if optional_path and len(parts) > 0 and "/" in parts[-1]:
+                        last_part = parts[-1]
+                        # Check if the last part ends with the optional path
+                        if optional_path and last_part.endswith(
+                            optional_path.lstrip("/")
+                        ):
+                            # Remove the path portion from the last server name
+                            parts[-1] = last_part[: -len(optional_path.lstrip("/"))]
+
+                    mcp_servers_from_path = parts
                 else:
-                    # Single server case - use regex approach for server/path separation
-                    # This handles cases like "custom_solutions/user_123/chat/completions"
-                    # where we want to extract "custom_solutions/user_123" as the server name
-                    single_server_match = re.match(r"^([^/]+(?:/[^/]+)?)(?:/.*)?$", servers_and_path)
+                    # For single server, it might be just a name or contain slashes
+                    # We need to determine where the server name ends and the path begins
+                    # This is tricky - let's use the original logic but handle comma cases differently
+                    single_server_match = re.match(
+                        r"^([^/]+(?:/[^/]+)?)(?:/.*)?$", mcp_servers_str
+                    )
                     if single_server_match:
                         server_name = single_server_match.group(1)
                         mcp_servers_from_path = [server_name]
                     else:
-                        mcp_servers_from_path = [servers_and_path]
+                        mcp_servers_from_path = [mcp_servers_str]
         return mcp_servers_from_path
 
     async def extract_mcp_auth_context(scope, path):
@@ -677,6 +696,7 @@ if MCP_AVAILABLE:
                 mcp_auth_header,
                 _,
                 mcp_server_auth_headers,
+                mcp_protocol_version,
             ) = await MCPRequestHandler.process_mcp_request(scope)
             mcp_servers = mcp_servers_from_path
         else:
@@ -685,8 +705,15 @@ if MCP_AVAILABLE:
                 mcp_auth_header,
                 mcp_servers,
                 mcp_server_auth_headers,
+                mcp_protocol_version,
             ) = await MCPRequestHandler.process_mcp_request(scope)
-        return user_api_key_auth, mcp_auth_header, mcp_servers, mcp_server_auth_headers
+        return (
+            user_api_key_auth,
+            mcp_auth_header,
+            mcp_servers,
+            mcp_server_auth_headers,
+            mcp_protocol_version,
+        )
 
     async def handle_streamable_http_mcp(
         scope: Scope, receive: Receive, send: Send
@@ -699,6 +726,7 @@ if MCP_AVAILABLE:
                 mcp_auth_header,
                 mcp_servers,
                 mcp_server_auth_headers,
+                mcp_protocol_version,
             ) = await extract_mcp_auth_context(scope, path)
             verbose_logger.debug(
                 f"MCP request mcp_servers (header/path): {mcp_servers}"
@@ -706,12 +734,14 @@ if MCP_AVAILABLE:
             verbose_logger.debug(
                 f"MCP server auth headers: {list(mcp_server_auth_headers.keys()) if mcp_server_auth_headers else None}"
             )
+            verbose_logger.debug(f"MCP protocol version: {mcp_protocol_version}")
             # Set the auth context variable for easy access in MCP functions
             set_auth_context(
                 user_api_key_auth=user_api_key_auth,
                 mcp_auth_header=mcp_auth_header,
                 mcp_servers=mcp_servers,
                 mcp_server_auth_headers=mcp_server_auth_headers,
+                mcp_protocol_version=mcp_protocol_version,
             )
 
             # Ensure session managers are initialized
@@ -750,6 +780,7 @@ if MCP_AVAILABLE:
                 mcp_auth_header,
                 mcp_servers,
                 mcp_server_auth_headers,
+                mcp_protocol_version,
             ) = await extract_mcp_auth_context(scope, path)
             verbose_logger.debug(
                 f"MCP request mcp_servers (header/path): {mcp_servers}"
@@ -757,11 +788,13 @@ if MCP_AVAILABLE:
             verbose_logger.debug(
                 f"MCP server auth headers: {list(mcp_server_auth_headers.keys()) if mcp_server_auth_headers else None}"
             )
+            verbose_logger.debug(f"MCP protocol version: {mcp_protocol_version}")
             set_auth_context(
                 user_api_key_auth=user_api_key_auth,
                 mcp_auth_header=mcp_auth_header,
                 mcp_servers=mcp_servers,
                 mcp_server_auth_headers=mcp_server_auth_headers,
+                mcp_protocol_version=mcp_protocol_version,
             )
 
             if not _SESSION_MANAGERS_INITIALIZED:
@@ -821,6 +854,7 @@ if MCP_AVAILABLE:
         mcp_auth_header: Optional[str] = None,
         mcp_servers: Optional[List[str]] = None,
         mcp_server_auth_headers: Optional[Dict[str, str]] = None,
+        mcp_protocol_version: Optional[str] = None,
     ) -> None:
         """
         Set the UserAPIKeyAuth in the auth context variable.
@@ -836,6 +870,7 @@ if MCP_AVAILABLE:
             mcp_auth_header=mcp_auth_header,
             mcp_servers=mcp_servers,
             mcp_server_auth_headers=mcp_server_auth_headers,
+            mcp_protocol_version=mcp_protocol_version,
         )
         auth_context_var.set(auth_user)
 
@@ -845,6 +880,7 @@ if MCP_AVAILABLE:
             Optional[str],
             Optional[List[str]],
             Optional[Dict[str, str]],
+            Optional[str],
         ]
     ):
         """
@@ -861,8 +897,9 @@ if MCP_AVAILABLE:
                 auth_user.mcp_auth_header,
                 auth_user.mcp_servers,
                 auth_user.mcp_server_auth_headers,
+                auth_user.mcp_protocol_version,
             )
-        return None, None, None, None
+        return None, None, None, None, None
 
     ########################################################
     ############ End of Auth Context Functions #############
