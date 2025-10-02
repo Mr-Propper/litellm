@@ -1749,6 +1749,8 @@ class VertexLLM(VertexBase):
         )
 
         request_body_str = json.dumps(request_body)
+        # Extract stream_options from optional_params to enable usage tracking
+        stream_options = optional_params.get("stream_options")
         streaming_response = CustomStreamWrapper(
             completion_stream=None,
             make_call=partial(
@@ -1762,6 +1764,7 @@ class VertexLLM(VertexBase):
                 logging_obj=logging_obj,
             ),
             model=model,
+            stream_options=stream_options,
             custom_llm_provider="vertex_ai_beta",
             logging_obj=logging_obj,
         )
@@ -2015,6 +2018,8 @@ class VertexLLM(VertexBase):
         ## SYNC STREAMING CALL ##
         if stream is True:
             request_data_str = json.dumps(data)
+            # Extract stream_options from optional_params to enable usage tracking
+            stream_options = optional_params.get("stream_options")
             streaming_response = CustomStreamWrapper(
                 completion_stream=None,
                 make_call=partial(
@@ -2034,6 +2039,7 @@ class VertexLLM(VertexBase):
                 model=model,
                 custom_llm_provider="vertex_ai_beta",
                 logging_obj=logging_obj,
+                stream_options=stream_options,
             )
 
             return streaming_response
