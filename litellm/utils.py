@@ -7129,6 +7129,8 @@ class ProviderConfigManager:
             return litellm.NovitaConfig()
         elif litellm.LlmProviders.NEBIUS == provider:
             return litellm.NebiusConfig()
+        elif litellm.LlmProviders.TARS == provider:
+            return litellm.TarsConfig()
         elif litellm.LlmProviders.WANDB == provider:
             return litellm.WandbConfig()
         elif litellm.LlmProviders.DASHSCOPE == provider:
@@ -7399,6 +7401,8 @@ class ProviderConfigManager:
             return litellm.LemonadeChatConfig()
         elif LlmProviders.CLARIFAI == provider:
             return litellm.ClarifaiConfig()
+        elif LlmProviders.TARS == provider:
+            return litellm.TarsConfig()
         return None
 
     @staticmethod

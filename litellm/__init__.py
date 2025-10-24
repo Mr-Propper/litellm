@@ -529,6 +529,7 @@ wandb_models: Set = set(WANDB_MODELS)
 ovhcloud_models: Set = set()
 ovhcloud_embedding_models: Set = set()
 lemonade_models: Set = set()
+tars_models: Set = set()
 
 
 def is_bedrock_pricing_only_model(key: str) -> bool:
@@ -753,6 +754,8 @@ def add_known_models():
             ovhcloud_embedding_models.add(key)
         elif value.get("litellm_provider") == "lemonade":
             lemonade_models.add(key)
+        elif value.get("litellm_provider") == "tars":
+            tars_models.add(key)
 
 
 add_known_models()
@@ -855,6 +858,7 @@ model_list = list(
     | ovhcloud_models
     | lemonade_models
     | set(clarifai_models)
+    | tars_models
 )
 
 model_list_set = set(model_list)
@@ -941,6 +945,7 @@ models_by_provider: dict = {
     "ovhcloud": ovhcloud_models | ovhcloud_embedding_models,
     "lemonade": lemonade_models,
     "clarifai": clarifai_models,
+    "tars": tars_models,
 }
 
 # mapping for those models which have larger equivalents
@@ -1285,6 +1290,7 @@ from .llms.watsonx.chat.transformation import IBMWatsonXChatConfig
 from .llms.watsonx.embed.transformation import IBMWatsonXEmbeddingConfig
 from .llms.github_copilot.chat.transformation import GithubCopilotConfig
 from .llms.nebius.chat.transformation import NebiusConfig
+from .llms.tars.chat.transformation import TarsConfig
 from .llms.wandb.chat.transformation import WandbConfig
 from .llms.dashscope.chat.transformation import DashScopeChatConfig
 from .llms.moonshot.chat.transformation import MoonshotChatConfig
