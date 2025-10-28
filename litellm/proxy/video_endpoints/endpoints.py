@@ -324,14 +324,14 @@ async def video_content(
             user_api_base=user_api_base,
             version=version,
         )
-        
+
         # Return raw video bytes with proper content type
         return Response(
             content=video_bytes,
             media_type="video/mp4",
             headers={
                 "Content-Disposition": f"attachment; filename=video_{video_id}.mp4"
-            }
+            },
         )
     except Exception as e:
         raise await processor._handle_llm_api_exception(

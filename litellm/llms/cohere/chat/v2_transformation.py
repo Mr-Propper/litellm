@@ -167,8 +167,10 @@ class CohereV2ChatConfig(OpenAIGPTConfig):
         """
         Cohere v2 chat api is in openai format, so we can use the openai transform request function to transform the request.
         """
-        data = super().transform_request(model, messages, optional_params, litellm_params, headers)
-        
+        data = super().transform_request(
+            model, messages, optional_params, litellm_params, headers
+        )
+
         return data
 
     def transform_response(

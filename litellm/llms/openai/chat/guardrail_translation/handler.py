@@ -267,9 +267,9 @@ class OpenAIChatCompletionsHandler(BaseTranslation):
 
             if isinstance(content, str) and content_idx_optional is None:
                 # Replace string content with guardrail response
-                cast(Choices, response.choices[choice_idx]).message.content = (
-                    guardrail_response
-                )
+                cast(
+                    Choices, response.choices[choice_idx]
+                ).message.content = guardrail_response
 
             elif isinstance(content, list) and content_idx_optional is not None:
                 # Replace specific text item in list content

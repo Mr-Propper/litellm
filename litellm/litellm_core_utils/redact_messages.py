@@ -76,13 +76,15 @@ def perform_redaction(model_call_details: dict, result):
     # Redact result
     if result is not None:
         # Check if result is a coroutine, async generator, or other async object - these cannot be deepcopied
-        if (asyncio.iscoroutine(result) or 
-            asyncio.iscoroutinefunction(result) or
-            hasattr(result, '__aiter__') or  # async generator
-            hasattr(result, '__anext__')):   # async iterator
+        if (
+            asyncio.iscoroutine(result)
+            or asyncio.iscoroutinefunction(result)
+            or hasattr(result, "__aiter__")
+            or hasattr(result, "__anext__")  # async generator
+        ):  # async iterator
             # For async objects, return a simple redacted response without deepcopy
             return {"text": "redacted-by-litellm"}
-        
+
         _result = copy.deepcopy(result)
         if isinstance(_result, litellm.ModelResponse):
             if hasattr(_result, "choices") and _result.choices is not None:
@@ -94,7 +96,9 @@ def perform_redaction(model_call_details: dict, result):
         elif isinstance(_result, litellm.ResponsesAPIResponse):
             if hasattr(_result, "output"):
                 for output_item in _result.output:
-                    if hasattr(output_item, "content") and isinstance(output_item.content, list):
+                    if hasattr(output_item, "content") and isinstance(
+                        output_item.content, list
+                    ):
                         for content_part in output_item.content:
                             if hasattr(content_part, "text"):
                                 content_part.text = "redacted-by-litellm"
@@ -111,10 +115,10 @@ def should_redact_message_logging(model_call_details: dict) -> bool:
     Determine if message logging should be redacted.
     """
     litellm_params = model_call_details.get("litellm_params", {})
-    
+
     metadata_field = get_metadata_variable_name_from_kwargs(litellm_params)
     metadata = litellm_params.get(metadata_field, {})
-    
+
     # Get headers from the metadata
     request_headers = metadata.get("headers", {}) if isinstance(metadata, dict) else {}
 
@@ -170,9 +174,9 @@ def _get_turn_off_message_logging_from_dynamic_params(
 
     handles boolean and string values of `turn_off_message_logging`
     """
-    standard_callback_dynamic_params: Optional[StandardCallbackDynamicParams] = (
-        model_call_details.get("standard_callback_dynamic_params", None)
-    )
+    standard_callback_dynamic_params: Optional[
+        StandardCallbackDynamicParams
+    ] = model_call_details.get("standard_callback_dynamic_params", None)
     if standard_callback_dynamic_params:
         _turn_off_message_logging = standard_callback_dynamic_params.get(
             "turn_off_message_logging"

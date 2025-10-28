@@ -90,7 +90,11 @@ from litellm.types.proxy.management_endpoints.ui_sso import (
     DefaultTeamSSOParams,
     LiteLLM_UpperboundKeyGenerateParams,
 )
-from litellm.types.utils import StandardKeyGenerationConfig, LlmProviders, SearchProviders
+from litellm.types.utils import (
+    StandardKeyGenerationConfig,
+    LlmProviders,
+    SearchProviders,
+)
 from litellm.types.utils import PriorityReservationSettings
 from litellm.integrations.custom_logger import CustomLogger
 from litellm.litellm_core_utils.logging_callback_manager import LoggingCallbackManager
@@ -157,9 +161,7 @@ _custom_logger_compatible_callbacks_literal = Literal[
     "cloudzero",
     "posthog",
 ]
-cold_storage_custom_logger: Optional[
-    _custom_logger_compatible_callbacks_literal
-] = None
+cold_storage_custom_logger: Optional[_custom_logger_compatible_callbacks_literal] = None
 logged_real_time_event_types: Optional[Union[List[str], Literal["*"]]] = None
 _known_custom_logger_compatible_callbacks: List = list(
     get_args(_custom_logger_compatible_callbacks_literal)
@@ -264,7 +266,9 @@ use_client: bool = False
 ssl_verify: Union[str, bool] = True
 ssl_security_level: Optional[str] = None
 ssl_certificate: Optional[str] = None
-ssl_ecdh_curve: Optional[str] = None  # Set to 'X25519' to disable PQC and improve performance
+ssl_ecdh_curve: Optional[
+    str
+] = None  # Set to 'X25519' to disable PQC and improve performance
 disable_streaming_logging: bool = False
 disable_token_counter: bool = False
 disable_add_transform_inline_image_block: bool = False
@@ -413,7 +417,9 @@ output_parse_pii: bool = False
 from litellm.litellm_core_utils.get_model_cost_map import get_model_cost_map
 
 model_cost = get_model_cost_map(url=model_cost_map_url)
-cost_discount_config: Dict[str, float] = {}  # Provider-specific cost discounts {"vertex_ai": 0.05} = 5% discount
+cost_discount_config: Dict[
+    str, float
+] = {}  # Provider-specific cost discounts {"vertex_ai": 0.05} = 5% discount
 custom_prompt_dict: Dict[str, dict] = {}
 check_provider_endpoint = False
 
@@ -768,9 +774,9 @@ azure_llms = {
     "gpt-35-turbo": "azure/gpt-35-turbo",
     "gpt-35-turbo-16k": "azure/gpt-35-turbo-16k",
     "gpt-35-turbo-instruct": "azure/gpt-35-turbo-instruct",
-    "azure/gpt-41":"gpt-4.1", 
-    "azure/gpt-41-mini":"gpt-4.1-mini",
-    "azure/gpt-41-nano":"gpt-4.1-nano"
+    "azure/gpt-41": "gpt-4.1",
+    "azure/gpt-41-mini": "gpt-4.1-mini",
+    "azure/gpt-41-nano": "gpt-4.1-nano",
 }
 
 azure_embedding_models = {
@@ -1183,7 +1189,9 @@ from .llms.bedrock.embed.amazon_titan_v2_transformation import (
 from .llms.cohere.chat.transformation import CohereChatConfig
 from .llms.cohere.chat.v2_transformation import CohereV2ChatConfig
 from .llms.bedrock.embed.cohere_transformation import BedrockCohereEmbeddingConfig
-from .llms.bedrock.embed.twelvelabs_marengo_transformation import TwelveLabsMarengoEmbeddingConfig
+from .llms.bedrock.embed.twelvelabs_marengo_transformation import (
+    TwelveLabsMarengoEmbeddingConfig,
+)
 from .llms.openai.openai import OpenAIConfig, MistralEmbeddingConfig
 from .llms.openai.image_variations.transformation import OpenAIImageVariationConfig
 from .llms.deepinfra.chat.transformation import DeepInfraConfig
@@ -1388,8 +1396,10 @@ def set_global_bitbucket_config(config: Dict[str, Any]) -> None:
     global global_bitbucket_config
     global_bitbucket_config = config
 
+
 ### GLOBAL CONFIG ###
 global_gitlab_config: Optional[Dict[str, Any]] = None
+
 
 def set_global_gitlab_config(config: Dict[str, Any]) -> None:
     """Set global BitBucket configuration for prompt management."""

@@ -43,7 +43,7 @@ from openai.types.responses.response import (
 
 # Handle OpenAI SDK version compatibility for Text type
 try:
-    from openai.types.responses.response_create_params import ( Text as ResponseText ) # type: ignore[attr-defined] # fmt: skip # isort: skip
+    from openai.types.responses.response_create_params import Text as ResponseText  # type: ignore[attr-defined] # fmt: skip # isort: skip
 except (ImportError, AttributeError):
     # Fall back to the concrete config type available in all SDK versions
     from openai.types.responses.response_text_config_param import (
@@ -674,7 +674,9 @@ class OpenAIChatCompletionAssistantMessage(TypedDict, total=False):
 
 class ChatCompletionAssistantMessage(OpenAIChatCompletionAssistantMessage, total=False):
     cache_control: ChatCompletionCachedContent
-    thinking_blocks: Optional[List[Union[ChatCompletionThinkingBlock, ChatCompletionRedactedThinkingBlock]]]
+    thinking_blocks: Optional[
+        List[Union[ChatCompletionThinkingBlock, ChatCompletionRedactedThinkingBlock]]
+    ]
 
 
 class ChatCompletionToolMessage(TypedDict):
@@ -847,12 +849,12 @@ class OpenAIChatCompletionChunk(ChatCompletionChunk):
 
 class Hyperparameters(BaseModel):
     batch_size: Optional[Union[str, int]] = None  # "Number of examples in each batch."
-    learning_rate_multiplier: Optional[Union[str, float]] = (
-        None  # Scaling factor for the learning rate
-    )
-    n_epochs: Optional[Union[str, int]] = (
-        None  # "The number of epochs to train the model for"
-    )
+    learning_rate_multiplier: Optional[
+        Union[str, float]
+    ] = None  # Scaling factor for the learning rate
+    n_epochs: Optional[
+        Union[str, int]
+    ] = None  # "The number of epochs to train the model for"
 
 
 class FineTuningJobCreate(BaseModel):
@@ -879,18 +881,18 @@ class FineTuningJobCreate(BaseModel):
 
     model: str  # "The name of the model to fine-tune."
     training_file: str  # "The ID of an uploaded file that contains training data."
-    hyperparameters: Optional[Hyperparameters] = (
-        None  # "The hyperparameters used for the fine-tuning job."
-    )
-    suffix: Optional[str] = (
-        None  # "A string of up to 18 characters that will be added to your fine-tuned model name."
-    )
-    validation_file: Optional[str] = (
-        None  # "The ID of an uploaded file that contains validation data."
-    )
-    integrations: Optional[List[str]] = (
-        None  # "A list of integrations to enable for your fine-tuning job."
-    )
+    hyperparameters: Optional[
+        Hyperparameters
+    ] = None  # "The hyperparameters used for the fine-tuning job."
+    suffix: Optional[
+        str
+    ] = None  # "A string of up to 18 characters that will be added to your fine-tuned model name."
+    validation_file: Optional[
+        str
+    ] = None  # "The ID of an uploaded file that contains validation data."
+    integrations: Optional[
+        List[str]
+    ] = None  # "A list of integrations to enable for your fine-tuning job."
     seed: Optional[int] = None  # "The seed controls the reproducibility of the job."
 
 
@@ -1410,6 +1412,7 @@ class ImageGenerationPartialImageEvent(BaseLiteLLMOpenAIResponseObject):
 
 class ErrorEventError(BaseLiteLLMOpenAIResponseObject):
     """Nested error object within ErrorEvent"""
+
     type: str  # e.g., 'invalid_request_error'
     code: str  # e.g., 'context_length_exceeded'
     message: str
@@ -1853,10 +1856,10 @@ class OpenAIMcpServerTool(TypedDict, total=False):
 class CreateVideoRequest(TypedDict, total=False):
     """
     CreateVideoRequest for OpenAI video generation API
-    
+
     Required Params:
         prompt: str - Text prompt that describes the video to generate
-    
+
     Optional Params:
         input_reference: Optional[str] - Optional image reference that guides generation
         model: Optional[str] - The video generation model to use (defaults to sora-2)
@@ -1867,6 +1870,7 @@ class CreateVideoRequest(TypedDict, total=False):
         extra_body: Optional[Dict[str, str]] - Additional body parameters
         timeout: Optional[float] - Request timeout
     """
+
     prompt: Required[str]
     input_reference: Optional[str]
     model: Optional[str]
@@ -1880,42 +1884,43 @@ class CreateVideoRequest(TypedDict, total=False):
 
 class OpenAIVideoObject(BaseModel):
     """OpenAI Video Object representing a video generation job."""
+
     id: str
     """Unique identifier for the video job."""
-    
+
     object: Literal["video"]
     """The object type, which is always 'video'."""
-    
+
     status: str
     """Current lifecycle status of the video job."""
-    
+
     created_at: int
     """Unix timestamp (seconds) for when the job was created."""
-    
+
     completed_at: Optional[int] = None
     """Unix timestamp (seconds) for when the job completed, if finished."""
-    
+
     expires_at: Optional[int] = None
     """Unix timestamp (seconds) for when the downloadable assets expire, if set."""
-    
+
     error: Optional[Dict[str, Any]] = None
     """Error payload that explains why generation failed, if applicable."""
-    
+
     progress: Optional[int] = None
     """Approximate completion percentage for the generation task."""
-    
+
     remixed_from_video_id: Optional[str] = None
     """Identifier of the source video if this video is a remix."""
-    
+
     seconds: Optional[str] = None
     """Duration of the generated clip in seconds."""
-    
+
     size: Optional[str] = None
     """The resolution of the generated video."""
-    
+
     model: Optional[str] = None
     """The video generation model that produced the job."""
-    
+
     _hidden_params: Dict[str, Any] = {}
 
     def __contains__(self, key):
