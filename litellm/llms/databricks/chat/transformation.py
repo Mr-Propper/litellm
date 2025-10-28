@@ -173,9 +173,9 @@ class DatabricksConfig(DatabricksBase, OpenAILikeChatConfig, AnthropicConfig):
         # Build DatabricksFunction explicitly to avoid parameter conflicts
         function_params: DatabricksFunction = {
             "name": tool["name"],
-            "parameters": cast(dict, tool.get("input_schema") or {})
+            "parameters": cast(dict, tool.get("input_schema") or {}),
         }
-        
+
         # Only add description if it exists
         description = tool.get("description")
         if description is not None:
@@ -229,7 +229,7 @@ class DatabricksConfig(DatabricksBase, OpenAILikeChatConfig, AnthropicConfig):
         Databricks supports Anthropic-style cache control for Claude models.
         Databricks ignores the cache_control flag with other models.
         """
-        # TODO: Think about how to best design the request transformation so that 
+        # TODO: Think about how to best design the request transformation so that
         # every request doesn't have to be transformed for to OpenAI and Anthropic request formats.
         return messages, tools
 

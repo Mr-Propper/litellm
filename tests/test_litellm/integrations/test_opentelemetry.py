@@ -526,8 +526,6 @@ class TestOpenTelemetry(unittest.TestCase):
         # But other attributes from OTEL_RESOURCE_ATTRIBUTES should still be present
         self.assertEqual(attributes.get("extra.attr"), "extra-value")
 
-
-
     def test_handle_success_spans_only(self):
         # make sure neither events nor metrics is on
         os.environ.pop("LITELLM_OTEL_INTEGRATION_ENABLE_EVENTS", None)

@@ -192,6 +192,7 @@ async def test_token_endpoint_forwards_code_verifier():
 
     # Mock the async httpx client with AsyncMock for async methods
     from unittest.mock import AsyncMock
+
     with patch(
         "litellm.proxy._experimental.mcp_server.discoverable_endpoints.get_async_httpx_client"
     ) as mock_get_client:
@@ -219,23 +220,28 @@ async def test_token_endpoint_forwards_code_verifier():
     # Check the data parameter includes code_verifier
     assert call_args[1]["data"]["code_verifier"] == "test_code_verifier_from_client"
     assert call_args[1]["data"]["code"] == "4/test_authorization_code"
-    assert call_args[1]["data"]["client_id"] == "669428968603-test.apps.googleusercontent.com"
+    assert (
+        call_args[1]["data"]["client_id"]
+        == "669428968603-test.apps.googleusercontent.com"
+    )
     assert call_args[1]["data"]["client_secret"] == "GOCSPX-test_secret"
     assert call_args[1]["data"]["grant_type"] == "authorization_code"
 
     # Verify response
     response_data = response.body
     import json
+
     token_data = json.loads(response_data)
     assert token_data["access_token"] == "ya29.test_access_token"
     assert token_data["token_type"] == "Bearer"
 
 
-
 @pytest.mark.asyncio
 async def test_register_client_without_mcp_server_name_returns_dummy():
     try:
-        from litellm.proxy._experimental.mcp_server.discoverable_endpoints import register_client
+        from litellm.proxy._experimental.mcp_server.discoverable_endpoints import (
+            register_client,
+        )
         from fastapi import Request
     except ImportError:
         pytest.skip("MCP discoverable endpoints not available")
@@ -258,8 +264,12 @@ async def test_register_client_without_mcp_server_name_returns_dummy():
 @pytest.mark.asyncio
 async def test_register_client_returns_existing_server_credentials():
     try:
-        from litellm.proxy._experimental.mcp_server.discoverable_endpoints import register_client
-        from litellm.proxy._experimental.mcp_server.mcp_server_manager import global_mcp_server_manager
+        from litellm.proxy._experimental.mcp_server.discoverable_endpoints import (
+            register_client,
+        )
+        from litellm.proxy._experimental.mcp_server.mcp_server_manager import (
+            global_mcp_server_manager,
+        )
         from litellm.types.mcp import MCPAuth
         from litellm.types.mcp_server.mcp_server_manager import MCPServer
         from litellm.proxy._types import MCPTransport
@@ -306,8 +316,12 @@ async def test_register_client_returns_existing_server_credentials():
 @pytest.mark.asyncio
 async def test_register_client_remote_registration_success():
     try:
-        from litellm.proxy._experimental.mcp_server.discoverable_endpoints import register_client
-        from litellm.proxy._experimental.mcp_server.mcp_server_manager import global_mcp_server_manager
+        from litellm.proxy._experimental.mcp_server.discoverable_endpoints import (
+            register_client,
+        )
+        from litellm.proxy._experimental.mcp_server.mcp_server_manager import (
+            global_mcp_server_manager,
+        )
         from litellm.types.mcp import MCPAuth
         from litellm.types.mcp_server.mcp_server_manager import MCPServer
         from litellm.proxy._types import MCPTransport
@@ -385,5 +399,3 @@ async def test_register_client_remote_registration_success():
         call_args.kwargs["json"]["token_endpoint_auth_method"]
         == request_payload["token_endpoint_auth_method"]
     )
-
-

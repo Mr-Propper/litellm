@@ -1032,7 +1032,6 @@ class TestBedrockLLMProxyRoute:
             "litellm.proxy.common_request_processing.ProxyBaseLLMRequestProcessing",
             return_value=mock_processor,
         ):
-
             # Test application-inference-profile endpoint
             endpoint = "model/arn:aws:bedrock:us-east-1:123456789012:application-inference-profile/r742sbn2zckd/converse"
 
@@ -1074,7 +1073,6 @@ class TestBedrockLLMProxyRoute:
             "litellm.proxy.common_request_processing.ProxyBaseLLMRequestProcessing",
             return_value=mock_processor,
         ):
-
             # Test regular model endpoint
             endpoint = "model/anthropic.claude-3-sonnet-20240229-v1:0/converse"
 
@@ -1134,17 +1132,17 @@ class TestBedrockLLMProxyRoute:
         }
 
         mock_llm_router = Mock()
-        
+
         # Mock ProxyBaseLLMRequestProcessing to raise the httpx error
         with patch(
             "litellm.proxy.common_request_processing.ProxyBaseLLMRequestProcessing.base_passthrough_process_llm_request",
             new_callable=AsyncMock,
-            side_effect=mock_http_error
+            side_effect=mock_http_error,
         ):
             mock_user_api_key_dict = Mock()
             mock_user_api_key_dict.api_key = "test-key"
             mock_user_api_key_dict.allowed_model_region = None
-            
+
             mock_proxy_logging_obj = Mock()
             mock_proxy_logging_obj.post_call_failure_hook = AsyncMock()
 

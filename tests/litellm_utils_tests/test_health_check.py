@@ -89,7 +89,7 @@ async def test_azure_img_gen_health_check():
         model_params={
             "model": "azure/dall-e-3",
             "api_base": os.getenv("AZURE_API_BASE"),
-            "api_key": os.getenv("AZURE_API_KEY")
+            "api_key": os.getenv("AZURE_API_KEY"),
         },
         mode="image_generation",
         prompt="cute baby sea otter",
@@ -97,7 +97,6 @@ async def test_azure_img_gen_health_check():
 
     assert isinstance(response, dict) and "error" not in response
     return response
-
 
 
 @pytest.mark.skip(reason="AWS Suspended Account")
@@ -191,6 +190,7 @@ async def test_audio_speech_health_check_with_another_voice():
     assert "error" not in response
 
     print(response)
+
 
 @pytest.mark.asyncio
 async def test_audio_transcription_health_check():
@@ -343,9 +343,12 @@ def test_update_litellm_params_for_health_check():
             "model": f"bedrock/{prefix}anthropic.claude-3-haiku-20240307-v1:0",
             "api_key": "fake_key",
         }
-        updated_params = _update_litellm_params_for_health_check(model_info, litellm_params)
-        assert updated_params["model"] == f"{prefix}anthropic.claude-3-haiku-20240307-v1:0", \
-            f"Failed to preserve CRIS prefix: {prefix}"
+        updated_params = _update_litellm_params_for_health_check(
+            model_info, litellm_params
+        )
+        assert (
+            updated_params["model"] == f"{prefix}anthropic.claude-3-haiku-20240307-v1:0"
+        ), f"Failed to preserve CRIS prefix: {prefix}"
 
     # Test regional + CRIS combination - region should be stripped, CRIS preserved
     litellm_params = {
@@ -369,14 +372,20 @@ def test_update_litellm_params_for_health_check():
         "api_key": "fake_key",
     }
     updated_params = _update_litellm_params_for_health_check(model_info, litellm_params)
-    assert updated_params["model"] == "llama/arn:aws:bedrock:us-east-1:123:imported-model/abc"
+    assert (
+        updated_params["model"]
+        == "llama/arn:aws:bedrock:us-east-1:123:imported-model/abc"
+    )
 
     litellm_params = {
         "model": "bedrock/deepseek_r1/arn:aws:bedrock:us-west-2:456:imported-model/xyz",
         "api_key": "fake_key",
     }
     updated_params = _update_litellm_params_for_health_check(model_info, litellm_params)
-    assert updated_params["model"] == "deepseek_r1/arn:aws:bedrock:us-west-2:456:imported-model/xyz"
+    assert (
+        updated_params["model"]
+        == "deepseek_r1/arn:aws:bedrock:us-west-2:456:imported-model/xyz"
+    )
 
     # Test route specifications - routes should be preserved
     litellm_params = {
@@ -384,7 +393,10 @@ def test_update_litellm_params_for_health_check():
         "api_key": "fake_key",
     }
     updated_params = _update_litellm_params_for_health_check(model_info, litellm_params)
-    assert updated_params["model"] == "converse/us.anthropic.claude-3-5-sonnet-20240620-v1:0"
+    assert (
+        updated_params["model"]
+        == "converse/us.anthropic.claude-3-5-sonnet-20240620-v1:0"
+    )
 
     litellm_params = {
         "model": "bedrock/invoke/us-west-2/anthropic.claude-instant-v1",
@@ -399,7 +411,10 @@ def test_update_litellm_params_for_health_check():
         "api_key": "fake_key",
     }
     updated_params = _update_litellm_params_for_health_check(model_info, litellm_params)
-    assert updated_params["model"] == "arn:aws:bedrock:eu-central-1:000:application-inference-profile/abc"
+    assert (
+        updated_params["model"]
+        == "arn:aws:bedrock:eu-central-1:000:application-inference-profile/abc"
+    )
 
     # Test edge case: region + handler + ARN
     litellm_params = {
@@ -407,7 +422,10 @@ def test_update_litellm_params_for_health_check():
         "api_key": "fake_key",
     }
     updated_params = _update_litellm_params_for_health_check(model_info, litellm_params)
-    assert updated_params["model"] == "llama/arn:aws:bedrock:us-east-1:123:imported-model/abc"
+    assert (
+        updated_params["model"]
+        == "llama/arn:aws:bedrock:us-east-1:123:imported-model/abc"
+    )
 
     # Test edge case: route + region + CRIS
     litellm_params = {
@@ -415,7 +433,10 @@ def test_update_litellm_params_for_health_check():
         "api_key": "fake_key",
     }
     updated_params = _update_litellm_params_for_health_check(model_info, litellm_params)
-    assert updated_params["model"] == "converse/eu.anthropic.claude-3-sonnet-20240229-v1:0"
+    assert (
+        updated_params["model"] == "converse/eu.anthropic.claude-3-sonnet-20240229-v1:0"
+    )
+
 
 @pytest.mark.asyncio
 async def test_perform_health_check_with_health_check_model():
@@ -506,6 +527,7 @@ async def test_health_check_bad_model():
         assert (
             end_time - start_time < 2
         ), "Health check took longer than health_check_timeout"
+
 
 @pytest.mark.asyncio
 async def test_ahealth_check_ocr():

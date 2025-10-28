@@ -1159,10 +1159,10 @@ def test_completion_cost_databricks_embedding(model, monkeypatch):
     api_key = "dapimykey"
     monkeypatch.setenv("DATABRICKS_API_BASE", base_url)
     monkeypatch.setenv("DATABRICKS_API_KEY", api_key)
-    
+
     os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
     litellm.model_cost = litellm.get_model_cost_map(url="")
-    
+
     mock_response_data = {
         "object": "list",
         "model": model.split("/")[1],
@@ -1187,18 +1187,16 @@ def test_completion_cost_databricks_embedding(model, monkeypatch):
             "prompt_tokens_details": None,
         },
     }
-    
+
     mock_response = MagicMock(spec=httpx.Response)
     mock_response.status_code = 200
     mock_response.json.return_value = mock_response_data
-    
+
     sync_handler = HTTPHandler()
-    
+
     with patch.object(HTTPHandler, "post", return_value=mock_response):
         resp = litellm.embedding(
-            model=model, 
-            input=["hey, how's it going?"],
-            client=sync_handler
+            model=model, input=["hey, how's it going?"], client=sync_handler
         )
 
         print(resp)
@@ -2896,7 +2894,6 @@ def test_json_valid_model_cost_map():
 
 
 def test_batch_cost_calculator():
-
     args = {
         "completion_response": {
             "choices": [
