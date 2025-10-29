@@ -1132,6 +1132,9 @@ class Router:
             )
 
             return response
+        except asyncio.CancelledError:
+            # Ensure CancelledError is properly propagated without being caught by the general exception handler
+            raise
         except Exception as e:
             asyncio.create_task(
                 send_llm_exception_alert(
@@ -2565,6 +2568,9 @@ class Router:
             response = await self.async_function_with_fallbacks(**kwargs)
 
             return response
+        except asyncio.CancelledError:
+            # Ensure CancelledError is properly propagated without being caught by the general exception handler
+            raise
         except Exception as e:
             asyncio.create_task(
                 send_llm_exception_alert(
