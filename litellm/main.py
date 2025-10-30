@@ -159,6 +159,7 @@ from .llms.bedrock.embed.embedding import BedrockEmbedding
 from .llms.bedrock.image.image_handler import BedrockImageGeneration
 from .llms.bytez.chat.transformation import BytezChatConfig
 from .llms.clarifai.chat.transformation import ClarifaiConfig
+from .llms.cloudrift.chat.transformation import CloudRiftChatConfig
 from .llms.codestral.completion.handler import CodestralTextCompletion
 from .llms.cohere.embed import handler as cohere_embed
 from .llms.custom_httpx.aiohttp_handler import BaseLLMAIOHTTPHandler
@@ -279,6 +280,7 @@ base_llm_aiohttp_handler = BaseLLMAIOHTTPHandler()
 sagemaker_chat_completion = SagemakerChatHandler()
 bytez_transformation = BytezChatConfig()
 heroku_transformation = HerokuChatConfig()
+cloudrift_transformation = CloudRiftChatConfig()
 oci_transformation = OCIChatConfig()
 ovhcloud_transformation = OVHCloudChatConfig()
 lemonade_transformation = LemonadeChatConfig()
@@ -2039,6 +2041,7 @@ def completion(  # type: ignore # noqa: PLR0915
             or custom_llm_provider == "deepinfra"
             or custom_llm_provider == "perplexity"
             or custom_llm_provider == "nvidia_nim"
+            or custom_llm_provider == "cloudrift"
             or custom_llm_provider == "cerebras"
             or custom_llm_provider == "baseten"
             or custom_llm_provider == "sambanova"
@@ -5839,8 +5842,7 @@ def speech(  # noqa: PLR0915
             # Cast to specific Azure config type to access dispatch method
             azure_config = cast(
                 AzureAVATextToSpeechConfig, text_to_speech_provider_config
-            )
-
+)
             response = azure_config.dispatch_text_to_speech(  # type: ignore
                 model=model,
                 input=input,
