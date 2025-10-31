@@ -2564,6 +2564,7 @@ class LlmProviders(str, Enum):
     DOTPROMPT = "dotprompt"
     WANDB = "wandb"
     OVHCLOUD = "ovhcloud"
+    IO_INTELLIGENCE = "io_intelligence"
     LEMONADE = "lemonade"
 
 
